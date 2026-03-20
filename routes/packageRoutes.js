@@ -21,12 +21,19 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+// Limit file size to 5MB
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
 
-router.post('/add', authMiddleware, upload.single('image'), addPackage);
+// Public routes
 router.get('/', getAllPackages);
 router.get('/agency/:agencyId', getPackagesByAgency);
 router.get('/:id', getPackageById);
+
+// Protected routes - only authenticated users
+router.post('/add', authMiddleware, upload.single('image'), addPackage);
 router.put('/:id', authMiddleware, upload.single('image'), updatePackage);
 router.delete('/:id', authMiddleware, deletePackage);
 

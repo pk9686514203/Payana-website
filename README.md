@@ -4,20 +4,114 @@ A production-ready REST API for a travel booking platform built with Express.js 
 
 ## 🚀 Quick Start
 
+### 1. Install Dependencies
 ```bash
-# Install dependencies
 npm install
+```
 
-# Start development server
+### 2. Setup MongoDB Connection
+
+**Option A: Local MongoDB**
+```bash
+# Make sure MongoDB is running locally
+mongod
+
+# Create backend/.env file with:
+MONGODB_URI=mongodb://localhost:27017/payana-travel-hub
+JWT_SECRET=your_secret_key
+PORT=5000
+NODE_ENV=development
+```
+
+**Option B: MongoDB Atlas (Cloud)**
+```bash
+# 1. Go to MongoDB Atlas and create a cluster
+# 2. Create database user credentials
+# 3. Add your IP to whitelist (or use 0.0.0.0)
+# 4. Copy connection string
+
+# Create backend/.env with:
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/payana-travel-hub
+JWT_SECRET=your_secret_key
+PORT=5000
+NODE_ENV=development
+```
+
+### 3. Test Database Connection
+```bash
+# Before starting the server, test your MongoDB connection
+npm run test:db
+
+# You should see:
+# ✅ Successfully connected to MongoDB!
+# ✓ Database name: payana-travel-hub
+```
+
+### 4. Start Development Server
+```bash
 npm run dev
 
-# Seed database with initial data
+# Expected logs:
+# 🔄 Connecting to MongoDB...
+# ✅ MongoDB connected successfully
+# ✅ Database is ready for queries
+# 🚀 Server running on port 5000
+```
+
+### 5. Seed Database (Optional)
+```bash
+# Add sample data
 node seed.js
 ```
 
 Server runs on `http://localhost:5000`
 
-## 📚 API Documentation
+## � Troubleshooting
+
+### MongoDB Connection Issues
+
+If you see errors like "Failed to fetch packages" or "Database connection error":
+
+1. **Check environment variables:**
+   ```bash
+   # Make sure backend/.env exists with MONGODB_URI
+   cat .env
+   ```
+
+2. **Test database connection:**
+   ```bash
+   npm run test:db
+   ```
+
+3. **Check logs for errors:**
+   - Look for lines starting with `❌` in server output
+   - Common issues:
+     - `ECONNREFUSED` = MongoDB not running
+     - `authentication failed` = Wrong credentials
+     - `HostNotFound` = Wrong cluster name
+
+4. **Verify MongoDB is running:**
+   ```bash
+   # For local MongoDB
+   mongod --version
+   
+   # For MongoDB Atlas
+   # Check cluster status in Atlas dashboard
+   ```
+
+5. **For more details:**
+   - See [MONGODB_TROUBLESHOOTING.md](../MONGODB_TROUBLESHOOTING.md)
+
+### Health Check
+```bash
+# Test if server and database are working
+curl http://localhost:5000/api/health
+
+# Response should include:
+# "database": "connected"
+```
+
+## �📚 API Documentation
 
 ### Base URL: `http://localhost:5000/api`
 

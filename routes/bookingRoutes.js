@@ -10,6 +10,7 @@ import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// All booking routes require authentication
 router.post('/', authMiddleware, createBooking);
 router.get('/my-bookings', authMiddleware, getMyBookings);
 router.get('/:id', authMiddleware, getBookingById);

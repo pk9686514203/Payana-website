@@ -1,20 +1,46 @@
 import Booking from '../models/Booking.js';
 import Package from '../models/Package.js';
 import Vehicle from '../models/Vehicle.js';
+import {
+  validateStringField,
+  validateDate,
+  validateNumberField,
+  sanitizeInput,
+} from '../utils/validation.js';
 
 export const createBooking = async (req, res) => {
   try {
     const { packageId, vehicleId, bookingDate, fromLocation, toLocation, numberOfPeople, notes } = req.body;
 
-    // Validation
-    if (!bookingDate || !fromLocation || !toLocation) {
-      return res
-        .status(400)
-        .json({ message: 'booking date, from location, and to location are required' });
+    // Validate required fields
+    const bookingDateValidation = validateDate(bookingDate, 'Booking date');
+    if (!bookingDateValidation.isValid) {
+      return res.status(400).json({ message: bookingDateValidation.error });
     }
 
+    const fromLocationValidation = validateStringField(fromLocation, 'From location', 2, 100);
+    if (!fromLocationValidation.isValid) {
+      return res.status(400).json({ message: fromLocationValidation.error });
+    }
+
+    const toLocationValidation = validateStringField(toLocation, 'To location', 2, 100);
+    if (!toLocationValidation.isValid) {
+      return res.status(400).json({ message: toLocationValidation.error });
+    }
+
+    // Validate package or vehicle
     if (!packageId && !vehicleId) {
       return res.status(400).json({ message: 'Either packageId or vehicleId is required' });
+    }
+
+    // Validate number of people
+    let numPeople = 1;
+    if (numberOfPeople) {
+      const peopleValidation = validateNumberField(numberOfPeople, 'Number of people', 1, 1000);
+      if (!peopleValidation.isValid) {
+        return res.status(400).json({ message: peopleValidation.error });
+      }
+      numPeople = peopleValidation.value;
     }
 
     let totalPrice = 0;
@@ -34,19 +60,22 @@ export const createBooking = async (req, res) => {
         return res.status(404).json({ message: 'Vehicle not found' });
       }
       // Simple calculation: assume 100km default if not specified
-      totalPrice = vehicle.pricePerKm * 100 * (numberOfPeople || 1);
+      totalPrice = vehicle.pricePerKm * 100 * numPeople;
     }
+
+    // Sanitize notes
+    const sanitizedNotes = notes ? sanitizeInput(notes) : '';
 
     const booking = new Booking({
       user: req.userId,
       package: packageId || null,
       vehicle: vehicleId || null,
-      bookingDate: new Date(bookingDate),
-      fromLocation,
-      toLocation,
-      numberOfPeople: numberOfPeople || 1,
+      bookingDate: bookingDateValidation.value,
+      fromLocation: fromLocationValidation.value,
+      toLocation: toLocationValidation.value,
+      numberOfPeople: numPeople,
       totalPrice,
-      notes: notes || '',
+      notes: sanitizedNotes,
     });
 
     await booking.save();
@@ -61,7 +90,8 @@ export const createBooking = async (req, res) => {
       booking: populatedBooking,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Booking error:', error);
+    res.status(500).json({ message: 'Failed to create booking. Please try again.' });
   }
 };
 
@@ -74,7 +104,8 @@ export const getMyBookings = async (req, res) => {
 
     res.status(200).json(bookings);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Get bookings error:', error);
+    res.status(500).json({ message: 'Failed to fetch bookings. Please try again.' });
   }
 };
 
