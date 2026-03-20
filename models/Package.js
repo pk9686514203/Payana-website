@@ -4,41 +4,30 @@ const packageSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, 'Package name is required'],
       trim: true,
     },
     price: {
       type: Number,
-      required: true,
+      required: [true, 'Price is required'],
       min: 0,
     },
     duration: {
       type: String,
-      required: true,
+      required: [true, 'Duration is required'],
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
     },
     image: {
       type: String,
       default: null,
     },
-    description: {
-      type: String,
-      default: '',
-    },
-    locations: [
-      {
-        type: String,
-      },
-    ],
-    itinerary: [
-      {
-        type: String,
-      },
-    ],
-    includes: [
-      {
-        type: String,
-      },
-    ],
+    locations: [String],
+    itinerary: [String],
+    includes: [String],
     agency: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Agency',

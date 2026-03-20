@@ -5,12 +5,12 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import authRoutes from './routes/authRoutes.js';
-import agencyRoutes from './routes/agencyRoutes.js';
-import vehicleRoutes from './routes/vehicleRoutes.js';
-import packageRoutes from './routes/packageRoutes.js';
-import bookingRoutes from './routes/bookingRoutes.js';
-import reviewRoutes from './routes/reviewRoutes.js';
+import authRoutes from './routes/auth.js';
+// import agencyRoutes from './routes/agencyRoutes.js';
+// import vehicleRoutes from './routes/vehicleRoutes.js';
+// import packageRoutes from './routes/packageRoutes.js';
+// import bookingRoutes from './routes/bookingRoutes.js';
+// import reviewRoutes from './routes/reviewRoutes.js';
 import { errorHandler } from './utils/errorHandler.js';
 import Vehicle from './models/Vehicle.js';
 import Package from './models/Package.js';
@@ -207,11 +207,11 @@ const startServer = async () => {
 
     // Routes
     app.use('/api/auth', authRoutes);
-    app.use('/api/agencies', agencyRoutes);
-    app.use('/api/vehicles', vehicleRoutes);
-    app.use('/api/packages', packageRoutes);
-    app.use('/api/bookings', bookingRoutes);
-    app.use('/api/reviews', reviewRoutes);
+    // app.use('/api/agencies', agencyRoutes);
+    // app.use('/api/vehicles', vehicleRoutes);
+    // app.use('/api/packages', packageRoutes);
+    // app.use('/api/bookings', bookingRoutes);
+    // app.use('/api/reviews', reviewRoutes);
 
     // Image serving
     app.use('/images', express.static(path.join(__dirname, 'public/images')));

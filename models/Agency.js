@@ -4,7 +4,27 @@ const agencySchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, 'Agency name is required'],
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: [true, 'Email is required'],
+      unique: [true, 'Email must be unique'],
+      lowercase: true,
+      match: [
+        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+        'Please provide a valid email address',
+      ],
+    },
+    phone: {
+      type: String,
+      required: [true, 'Phone is required'],
+      trim: true,
+    },
+    address: {
+      type: String,
+      required: [true, 'Address is required'],
       trim: true,
     },
     owner: {
@@ -12,46 +32,17 @@ const agencySchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    location: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    description: {
-      type: String,
-      default: '',
+    verified: {
+      type: Boolean,
+      default: false,
     },
     logo: {
       type: String,
       default: null,
     },
-    phone: {
+    description: {
       type: String,
-      required: true,
       trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      lowercase: true,
-      trim: true,
-    },
-    verified: {
-      type: Boolean,
-      default: false,
-    },
-    rating: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 5,
-    },
-    packagesCount: {
-      type: Number,
-      default: 0,
-    },
-    instagram: {
-      type: String,
       default: null,
     },
   },

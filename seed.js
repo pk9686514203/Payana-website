@@ -1,189 +1,267 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import User from './models/User.js';
-import Agency from './models/Agency.js';
-import Vehicle from './models/Vehicle.js';
-import Package from './models/Package.js';
 
 dotenv.config();
 
-const seedDatabase = async () => {
+// Vehicle Schema (if model not imported)
+const vehicleSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ['car', 'suv', 'van', 'bus', 'bike'],
+      required: true,
+    },
+    seats: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    pricePerKm: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    location: {
+      type: String,
+      required: true,
+    },
+    image: String,
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    available: {
+      type: Boolean,
+      default: true,
+    },
+    features: [String],
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { timestamps: true }
+);
+
+const Vehicle = mongoose.model('Vehicle', vehicleSchema);
+
+// Comprehensive vehicle seed data
+const vehicles = [
+  {
+    name: 'Toyota Innova',
+    type: 'car',
+    seats: 7,
+    pricePerKm: 12,
+    location: 'Bengaluru',
+    image: 'https://via.placeholder.com/300?text=Toyota+Innova',
+    rating: 4.8,
+    verified: true,
+    available: true,
+    features: ['AC', 'WiFi', 'USB Charging', 'Comfortable Seating'],
+  },
+  {
+    name: 'Mahindra XUV500',
+    type: 'suv',
+    seats: 7,
+    pricePerKm: 15,
+    location: 'Mysuru',
+    image: 'https://via.placeholder.com/300?text=XUV500',
+    rating: 4.6,
+    verified: true,
+    available: true,
+    features: ['AC', 'Power Steering', 'ABS', 'Audio System'],
+  },
+  {
+    name: 'Force Traveller',
+    type: 'van',
+    seats: 14,
+    pricePerKm: 18,
+    location: 'Chennai',
+    image: 'https://via.placeholder.com/300?text=Force+Traveller',
+    rating: 4.7,
+    verified: true,
+    available: true,
+    features: ['AC', 'Spacious Interior', 'First Aid Kit', 'Safety Equipment'],
+  },
+  {
+    name: 'Volvo Coach',
+    type: 'bus',
+    seats: 42,
+    pricePerKm: 25,
+    location: 'Hyderabad',
+    image: 'https://via.placeholder.com/300?text=Volvo+Coach',
+    rating: 4.9,
+    verified: true,
+    available: true,
+    features: ['AC', 'Reclining Seats', 'Onboard Toilet', 'WiFi'],
+  },
+  {
+    name: 'Tempo Traveller',
+    type: 'van',
+    seats: 12,
+    pricePerKm: 16,
+    location: 'Coimbatore',
+    image: 'https://via.placeholder.com/300?text=Tempo+Traveller',
+    rating: 4.5,
+    verified: true,
+    available: true,
+    features: ['AC', 'Spacious Cargo', 'Good Suspension', 'Audio System'],
+  },
+  {
+    name: 'Royal Enfield Bullet',
+    type: 'bike',
+    seats: 2,
+    pricePerKm: 8,
+    location: 'Ooty',
+    image: 'https://via.placeholder.com/300?text=Royal+Enfield',
+    rating: 4.7,
+    verified: true,
+    available: true,
+    features: ['Fuel Efficient', 'Reliable', 'Classic Design', 'Smooth Ride'],
+  },
+  {
+    name: 'Skoda Superb',
+    type: 'car',
+    seats: 5,
+    pricePerKm: 14,
+    location: 'Bengaluru',
+    image: 'https://via.placeholder.com/300?text=Skoda+Superb',
+    rating: 4.8,
+    verified: true,
+    available: true,
+    features: ['AC', 'Leather Seats', 'Advanced Audio', 'Sunroof'],
+  },
+  {
+    name: 'Hummer H2',
+    type: 'suv',
+    seats: 6,
+    pricePerKm: 20,
+    location: 'Goa',
+    image: 'https://via.placeholder.com/300?text=Hummer+H2',
+    rating: 4.4,
+    verified: true,
+    available: true,
+    features: ['AC', 'Premium Interior', 'Entertainment System', 'GPS Navigation'],
+  },
+  {
+    name: 'Mercedes Sprinter',
+    type: 'van',
+    seats: 16,
+    pricePerKm: 22,
+    location: 'Munnar',
+    image: 'https://via.placeholder.com/300?text=Mercedes+Sprinter',
+    rating: 4.6,
+    verified: true,
+    available: true,
+    features: ['AC', 'Luxury Interior', 'Luggage Space', 'Premium Service'],
+  },
+  {
+    name: 'Tata Harrier',
+    type: 'suv',
+    seats: 5,
+    pricePerKm: 13,
+    location: 'Pune',
+    image: 'https://via.placeholder.com/300?text=Tata+Harrier',
+    rating: 4.7,
+    verified: true,
+    available: true,
+    features: ['AC', 'Touchscreen Display', 'Apple CarPlay', 'Safety Features'],
+  },
+];
+
+/**
+ * Seed vehicles into MongoDB
+ * Usage: node seed.js
+ */
+const seedVehicles = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
+    // Validate MONGO_URI
+    if (!process.env.MONGO_URI) {
+      throw new Error('MONGO_URI environment variable is not defined. Check your .env file.');
+    }
 
-    // Clear existing data
-    await User.deleteMany({});
-    await Agency.deleteMany({});
-    await Vehicle.deleteMany({});
-    await Package.deleteMany({});
-
-    // Create admin/agency owner user
-    const adminUser = await User.create({
-      name: 'SoaringX Admin',
-      email: 'soaring.xofficial@gmail.com',
-      phone: '9390071812',
-      password: 'soaringx@123',
-      role: 'agent',
-      verified: true,
+    console.log('🔗 Connecting to MongoDB...');
+    
+    // Connect to MongoDB
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
 
-    console.log('Admin user created:', adminUser.email);
+    console.log('✅ Connected to MongoDB');
 
-    // Create SoaringX agency
-    const soaringxAgency = await Agency.create({
-      name: 'SoaringX Tours & Packages',
-      owner: adminUser._id,
-      location: 'Bengaluru',
-      description:
-        'SoaringX Tours & Packages is a premier travel agency offering exciting tour packages across India. We specialize in adventure trips, hill station getaways, and beach vacations.',
-      phone: '9390071812',
-      email: 'soaring.xofficial@gmail.com',
-      verified: true,
-      rating: 4.9,
-      packagesCount: 0,
-    });
+    // Clear existing vehicles
+    console.log('🧹 Clearing existing vehicles...');
+    const deletedCount = await Vehicle.deleteMany({});
+    console.log(`   Deleted ${deletedCount.deletedCount} vehicles`);
 
-    console.log('SoaringX agency created successfully');
-    console.log('Agency ID:', soaringxAgency._id);
+    // Insert new vehicles
+    console.log('📝 Inserting vehicles...');
+    const result = await Vehicle.insertMany(vehicles);
+    console.log(`✅ Inserted ${result.length} vehicles successfully`);
 
-    // Create a test customer
-    const testCustomer = await User.create({
-      name: 'Test Customer',
-      email: 'customer@test.com',
-      phone: '9876543210',
-      password: 'test@123',
-      role: 'user',
-    });
-
-    console.log('Test customer created:', testCustomer.email);
-
-    // Create SoaringX Vehicles
-    const vehicles = await Vehicle.insertMany([
+    // Display inserted data
+    console.log('\n📊 Vehicle Summary:');
+    const vehicleTypes = await Vehicle.aggregate([
       {
-        name: 'Innova Crysta',
-        type: 'suv',
-        seats: 7,
-        pricePerKm: 16,
-        owner: adminUser._id,
-        agency: soaringxAgency._id,
-        location: 'Bengaluru',
-        image: '/images/innova.jpg',
-        rating: 4.8,
-        verified: true,
-        features: ['AC', 'Music System', 'GPS', 'First Aid Kit'],
+        $group: {
+          _id: '$type',
+          count: { $sum: 1 },
+          avgPrice: { $avg: '$pricePerKm' },
+        },
       },
-      {
-        name: 'Tempo Traveller (12 Seater)',
-        type: 'van',
-        seats: 12,
-        pricePerKm: 22,
-        owner: adminUser._id,
-        agency: soaringxAgency._id,
-        location: 'Bengaluru',
-        image: '/images/tempo-traveller.jpg',
-        rating: 4.6,
-        verified: true,
-        features: ['AC', 'Push Back Seats', 'LCD Screen', 'Luggage Space'],
-      },
+      { $sort: { _id: 1 } },
     ]);
 
-    console.log(`✅ ${vehicles.length} vehicles created for SoaringX`);
+    console.log('   Type       | Count | Avg Price/km');
+    console.log('   -----------|-------|-------------');
+    vehicleTypes.forEach((v) => {
+      console.log(
+        `   ${v._id.padEnd(10)} | ${String(v.count).padEnd(5)} | ₹${v.avgPrice.toFixed(2)}`
+      );
+    });
 
-    // Create SoaringX Packages
-    const packages = await Package.insertMany([
-      {
-        name: 'Ooty Budget Trip',
-        price: 4499,
-        duration: '2 Days / 1 Night',
-        locations: ['Bengaluru', 'Ooty'],
-        description:
-          "Escape to the Queen of Hill Stations! This budget-friendly Ooty package includes everything — comfortable transport from Bengaluru, 4 meals with snacks and tea/coffee, the iconic Toy Train ride, entry tickets with boating, and a cozy 3-star hotel stay.",
-        image: '/images/ooty-package.png',
-        itinerary: [
-          'Day 1: Bengaluru to Ooty, Botanical Garden, Ooty Lake Boating, Toy Train Ride, Hotel check-in',
-          'Day 2: Rose Garden, Tea Factory Visit, Doddabetta Peak, Shopping, Return to Bengaluru',
-        ],
-        includes: [
-          'Transport',
-          '4 Meals + Snacks + Tea/Coffee',
-          'Toy Train Ticket',
-          'Entry Tickets + Boating',
-          '1 Night 3★ Hotel Stay',
-        ],
-        agency: soaringxAgency._id,
-        rating: 4.8,
-        reviews: 278,
-        verified: true,
-      },
-      {
-        name: 'Kerala Adventure Trip',
-        price: 6499,
-        duration: '3 Days / 2 Nights',
-        locations: ['Bengaluru', 'Munnar', 'Alleppey'],
-        description:
-          "Experience the ultimate Kerala adventure! Explore the misty hills of Munnar, witness the breathtaking sunrise at Kolukkumalai, and cruise through the serene backwaters of Alleppey. This trip is packed with thrilling jeep rides, scenic boat cruises, and authentic Kerala cuisine.",
-        image: '/images/kerala-package.png',
-        itinerary: [
-          'Day 1: Pickup from Bengaluru, drive to Munnar. Evening: Explore local markets & tea gardens',
-          'Day 2: Early morning Kolukkumalai Jeep Ride, Mattupetty Dam, Echo Point. Drive to Alleppey',
-          'Day 3: Alleppey Shikara Boat Ride, Alleppey Beach, Return journey',
-        ],
-        includes: [
-          'Transport',
-          'Hygienic Stay',
-          'Food Included',
-          'Jeep Ride',
-          'Shikara Boat Ride',
-        ],
-        agency: soaringxAgency._id,
-        rating: 4.9,
-        reviews: 342,
-        verified: true,
-      },
-      {
-        name: 'Chikmagalur Hill Retreat',
-        price: 5499,
-        duration: '2 Days / 1 Night',
-        locations: ['Bengaluru', 'Chikmagalur'],
-        description:
-          'Discover the coffee capital of India with stunning mountain views, trekking trails, and serene homestays.',
-        image: '/images/chikmagalur-package.png',
-        itinerary: [
-          'Day 1: Bengaluru to Chikmagalur, Mullayanagiri Trek, Coffee Estate Visit',
-          'Day 2: Baba Budangiri, Hebbe Falls, Return',
-        ],
-        includes: ['Transport', 'Homestay', 'Breakfast & Dinner'],
-        agency: soaringxAgency._id,
-        rating: 4.7,
-        reviews: 189,
-        verified: true,
-      },
-    ]);
+    const totalVehicles = await Vehicle.countDocuments();
+    console.log(`\n   Total Vehicles: ${totalVehicles}`);
 
-    console.log(`✅ ${packages.length} packages created for SoaringX`);
-
-    // Update agency packages count
-    soaringxAgency.packagesCount = packages.length;
-    await soaringxAgency.save();
-
-    console.log('\n✅ Database seeded successfully!');
-    console.log('Test Login Credentials:');
-    console.log('Email:', testCustomer.email);
-    console.log('Password: test@123');
-    console.log('\nAgency Details:');
-    console.log('Name:', soaringxAgency.name);
-    console.log('Email:', soaringxAgency.email);
-    console.log('Phone:', soaringxAgency.phone);
-    console.log(`\nCreated: ${vehicles.length} vehicles and ${packages.length} packages`);
-
-    await mongoose.disconnect();
+    console.log('\n✨ Seed completed successfully!');
     process.exit(0);
   } catch (error) {
-    console.error('Seeding error:', error);
-    await mongoose.disconnect();
+    console.error('❌ Error seeding vehicles:', error.message);
+    if (error.name === 'MongoServerError') {
+      console.error('   MongoDB Server Error:', error.message);
+    }
+    if (error.name === 'MongoNetworkError') {
+      console.error('   Network Error: Unable to connect to MongoDB');
+      console.log('   Check your MONGO_URI and ensure MongoDB is running');
+    }
+    if (error.name === 'ValidationError') {
+      console.error('   Validation Error:', error.message);
+    }
     process.exit(1);
+  } finally {
+    // Disconnect from MongoDB
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.disconnect();
+      console.log('🔌 Disconnected from MongoDB');
+    }
   }
 };
 
-seedDatabase();
+// Run seeding
+seedVehicles();

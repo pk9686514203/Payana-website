@@ -4,37 +4,28 @@ const vehicleSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, 'Vehicle name is required'],
       trim: true,
     },
     type: {
       type: String,
-      required: true,
       enum: ['car', 'suv', 'van', 'bus', 'bike'],
+      default: 'car',
     },
     seats: {
       type: Number,
-      required: true,
+      required: [true, 'Number of seats is required'],
       min: 1,
     },
     pricePerKm: {
       type: Number,
-      required: true,
+      required: [true, 'Price per km is required'],
       min: 0,
-    },
-    owner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    agency: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Agency',
-      default: null,
     },
     location: {
       type: String,
-      required: true,
+      required: [true, 'Location is required'],
+      trim: true,
     },
     image: {
       type: String,
@@ -50,11 +41,17 @@ const vehicleSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    features: [
-      {
-        type: String,
-      },
-    ],
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    agency: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Agency',
+      default: null,
+    },
+    features: [String],
   },
   { timestamps: true }
 );
