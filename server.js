@@ -19,10 +19,9 @@ app.set('trust proxy', 1);
 
 const PORT = process.env.PORT || 5000;
 
-const CORS_ORIGINS = [
-  'https://payana-frontendd.vercel.app',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
+const allowedOrigins = [
+  'https://payana-frontendd.vercel.app', // 🔥 your actual frontend
+  'http://localhost:5173'
 ];
 
 app.use(
