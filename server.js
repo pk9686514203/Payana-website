@@ -20,7 +20,9 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
-  'https://payana-frontendd.vercel.app', // 🔥 your actual frontend
+  'https://payana-frontendd.vercel.app',
+  'https://www.payanabookings.in',  // 🔥 ADD THIS
+  'https://payanabookings.in',      // 🔥 also add this (important)
   'http://localhost:5173'
 ];
 
