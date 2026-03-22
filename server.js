@@ -19,47 +19,46 @@ app.set('trust proxy', 1);
 
 const PORT = process.env.PORT || 5000;
 
+// ✅ FIXED CORS ORIGINS
 const allowedOrigins = [
   'https://payana-frontendd.vercel.app',
-  'https://www.payanabookings.in',  // 🔥 ADD THIS
-  'https://payanabookings.in',      // 🔥 also add this (important)
+  'https://www.payanabookings.in',
+  'https://payanabookings.in',
   'http://localhost:5173'
 ];
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin) {
-        return callback(null, true);
-      }
-      if (CORS_ORIGINS.includes(origin)) {
-        return callback(null, true);
-      }
-      if (process.env.CORS_ALLOW_ALL === 'true') {
-        return callback(null, true);
-      }
-      if (origin.startsWith('https://') && origin.endsWith('.vercel.app')) {
-        return callback(null, true);
-      }
-      console.warn('[CORS] blocked origin:', origin);
-      return callback(null, false);
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-export-key', 'x-internal-key', 'X-Requested-With'],
-    optionsSuccessStatus: 204,
-  })
-);
+// ✅ FIXED CORS CONFIG
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
 
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.log('[CORS BLOCKED]:', origin);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// ✅ IMPORTANT (preflight fix)
+app.options('*', cors());
+
+// Logging
 app.use((req, res, next) => {
   const origin = req.get('origin') || '-';
   console.log(`[REQUEST] ${req.method} ${req.originalUrl} | origin=${origin} | mongo=${isMongoConnected() ? 'up' : 'down'}`);
   next();
 });
 
+// Body parsing
 app.use(express.json({ limit: '12mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Test routes
 app.get('/', (_req, res) => {
   res.status(200).send('API WORKING ✅');
 });
@@ -75,13 +74,12 @@ app.get('/health', (_req, res) => {
   });
 });
 
+// Ensure DB connected
 function requireMongoForApi(req, res, next) {
-  if (req.method === 'OPTIONS') {
-    return next();
-  }
-  if (isMongoConnected()) {
-    return next();
-  }
+  if (req.method === 'OPTIONS') return next();
+
+  if (isMongoConnected()) return next();
+
   console.log('[API] Database not connected —', req.method, req.originalUrl);
   return res.status(500).json({
     error: 'Database not connected',
@@ -90,6 +88,7 @@ function requireMongoForApi(req, res, next) {
 
 app.use('/api', requireMongoForApi);
 
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/bookings', bookingRoutes);
@@ -97,10 +96,12 @@ app.use('/api/export', exportRoutes);
 app.use('/api/me', meRoutes);
 app.use('/api', publicRoutes);
 
+// 404
 app.use((_req, res) => {
   res.status(404).json({ ok: false, error: 'Not found' });
 });
 
+// Error handler
 app.use((err, _req, res, _next) => {
   console.error('[API ERROR]', err);
   const status = err.status || err.statusCode || 500;
@@ -110,8 +111,10 @@ app.use((err, _req, res, _next) => {
   });
 });
 
+// Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+// Connect DB
 connectDB();
