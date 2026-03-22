@@ -3,137 +3,114 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
+import authRoutes from './routes/auth.js';
+import otpRoutes from './routes/otp.js';
+import bookingRoutes from './routes/bookings.js';
+import exportRoutes from './routes/export.js';
+import meRoutes from './routes/me.js';
+import publicRoutes from './routes/public.js';
+import { connectDB, isMongoConnected } from './connectDB.js';
+
 dotenv.config();
 
 const app = express();
 
-/* ================== CORS ================== */
-app.use(cors({
-  origin: [
-    'https://payana-website-1.onrender.com', // your frontend
-    'https://your-netlify-app.netlify.app',  // if using netlify
-    'http://localhost:5173'
-  ],
-  credentials: true
-}));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-/* ================== MONGODB ================== */
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch(err => console.log("❌ MongoDB Error:", err));
-
-/* ================== MODELS ================== */
-
-// USER
-const User = mongoose.model("User", new mongoose.Schema({
-  name: String,
-  email: String,
-  password: String,
-  phone: String,
-  role: String
-}, { timestamps: true }));
-
-// AGENCY
-const Agency = mongoose.model("Agency", new mongoose.Schema({
-  name: String,
-  email: String,
-  phone: String,
-  address: String,
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
-}, { timestamps: true }));
-
-// VEHICLE
-const Vehicle = mongoose.model("Vehicle", new mongoose.Schema({
-  name: String,
-  type: String,
-  seats: Number,
-  pricePerKm: Number,
-  location: String,
-  image: String,
-  rating: Number,
-  verified: Boolean,
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  agency: { type: mongoose.Schema.Types.ObjectId, ref: "Agency" },
-  features: [String]
-}, { timestamps: true }));
-
-// PACKAGE
-const Package = mongoose.model("Package", new mongoose.Schema({
-  name: String,
-  price: Number,
-  duration: String,
-  description: String,
-  image: String,
-  locations: [String],
-  itinerary: [String],
-  includes: [String],
-  agency: { type: mongoose.Schema.Types.ObjectId, ref: "Agency" },
-  rating: Number,
-  reviews: Number,
-  verified: Boolean
-}, { timestamps: true }));
-
-// ✅ BOOKING MODEL
-const Booking = mongoose.model("Booking", new mongoose.Schema({
-  userId: String,
-  packageId: String,
-  persons: Number,
-  travelDate: String,
-  totalPrice: Number
-}, { timestamps: true }));
-
-/* ================== ROUTES ================== */
-
-// ROOT
-app.get("/", (req, res) => {
-  res.send("🚀 Payana Backend Running");
-});
-
-// VEHICLES
-app.get("/api/vehicles", async (req, res) => {
-  const data = await Vehicle.find();
-  res.json(data);
-});
-
-// PACKAGES
-app.get("/api/packages", async (req, res) => {
-  const data = await Package.find();
-  res.json(data);
-});
-
-// ✅ CREATE BOOKING (IMPORTANT)
-app.post("/api/bookings", async (req, res) => {
-  try {
-    console.log("Incoming booking:", req.body);
-
-    const booking = new Booking(req.body);
-    await booking.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Booking saved successfully",
-      data: booking
-    });
-
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ✅ GET BOOKINGS (ADMIN)
-app.get("/api/bookings", async (req, res) => {
-  const bookings = await Booking.find();
-  res.json(bookings);
-});
-
-/* ================== START ================== */
+app.set('trust proxy', 1);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on ${PORT}`);
+const CORS_ORIGINS = [
+  'https://payana-frontendd.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (CORS_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+      if (process.env.CORS_ALLOW_ALL === 'true') {
+        return callback(null, true);
+      }
+      if (origin.startsWith('https://') && origin.endsWith('.vercel.app')) {
+        return callback(null, true);
+      }
+      console.warn('[CORS] blocked origin:', origin);
+      return callback(null, false);
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-export-key', 'x-internal-key', 'X-Requested-With'],
+    optionsSuccessStatus: 204,
+  })
+);
+
+app.use((req, res, next) => {
+  const origin = req.get('origin') || '-';
+  console.log(`[REQUEST] ${req.method} ${req.originalUrl} | origin=${origin} | mongo=${isMongoConnected() ? 'up' : 'down'}`);
+  next();
 });
+
+app.use(express.json({ limit: '12mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+app.get('/', (_req, res) => {
+  res.status(200).send('API WORKING ✅');
+});
+
+app.get('/health', (_req, res) => {
+  const ready = mongoose.connection.readyState;
+  const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  res.status(200).json({
+    ok: true,
+    mongo: isMongoConnected() ? 'connected' : 'disconnected',
+    mongoState: states[ready] ?? String(ready),
+    uptime: process.uptime(),
+  });
+});
+
+function requireMongoForApi(req, res, next) {
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+  if (isMongoConnected()) {
+    return next();
+  }
+  console.log('[API] Database not connected —', req.method, req.originalUrl);
+  return res.status(500).json({
+    error: 'Database not connected',
+  });
+}
+
+app.use('/api', requireMongoForApi);
+
+app.use('/api/auth', authRoutes);
+app.use('/api/otp', otpRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/export', exportRoutes);
+app.use('/api/me', meRoutes);
+app.use('/api', publicRoutes);
+
+app.use((_req, res) => {
+  res.status(404).json({ ok: false, error: 'Not found' });
+});
+
+app.use((err, _req, res, _next) => {
+  console.error('[API ERROR]', err);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    ok: false,
+    error: err.message || 'Internal server error',
+  });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+connectDB();

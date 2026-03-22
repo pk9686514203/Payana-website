@@ -9,8 +9,18 @@ const vehicleSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['car', 'suv', 'van', 'bus', 'bike'],
-      default: 'car',
+      trim: true,
+      default: 'SUV',
+    },
+    driverName: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'approved'],
+      default: 'approved',
     },
     seats: {
       type: Number,

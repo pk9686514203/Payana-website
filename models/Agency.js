@@ -45,6 +45,16 @@ const agencySchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
+    instagram: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'approved'],
+      default: 'approved',
+    },
   },
   { timestamps: true }
 );

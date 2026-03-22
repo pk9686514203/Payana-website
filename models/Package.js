@@ -47,6 +47,11 @@ const packageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    status: {
+      type: String,
+      enum: ['pending', 'approved'],
+      default: 'approved',
+    },
   },
   { timestamps: true }
 );

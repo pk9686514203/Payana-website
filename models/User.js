@@ -29,8 +29,13 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'agent', 'operator', 'admin', 'agency'],
-      default: 'user',
+      enum: ['customer', 'agency', 'owner', 'admin', 'user', 'agent', 'operator'],
+      default: 'customer',
+    },
+    agencyName: {
+      type: String,
+      trim: true,
+      default: '',
     },
     verified: {
       type: Boolean,
